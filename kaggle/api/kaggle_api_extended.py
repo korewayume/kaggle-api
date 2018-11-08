@@ -16,6 +16,7 @@
 
 # coding=utf-8
 from __future__ import print_function
+from .baidupan import BaiDuPan
 import csv
 from datetime import datetime
 import io
@@ -1474,18 +1475,18 @@ class KaggleApi(KaggleApi):
         if not quiet:
             print('Downloading ' + os.path.basename(outfile) + ' to ' +
                   outpath)
-        with tqdm(
-                total=size,
-                unit='B',
-                unit_scale=True,
-                unit_divisor=1024,
-                disable=quiet) as pbar:
-            with open(outfile, 'wb') as out:
+        with BaiDuPan(os.path.basename(outfile)) as pan:
+            with tqdm(
+                    total=size,
+                    unit='B',
+                    unit_scale=True,
+                    unit_divisor=1024,
+                    disable=quiet) as pbar:
                 while True:
                     data = response.read(chunk_size)
                     if not data:
                         break
-                    out.write(data)
+                    pan.update(data)
                     size_read = min(size, size_read + chunk_size)
                     pbar.update(len(data))
             if not quiet:
