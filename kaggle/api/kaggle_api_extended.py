@@ -63,13 +63,14 @@ except NameError:
 
 
 class KaggleApi(KaggleApi):
-    __version__ = '1.5.0'
+    __version__ = '1.5.1.1'
 
     CONFIG_NAME_PROXY = 'proxy'
     CONFIG_NAME_COMPETITION = 'competition'
     CONFIG_NAME_PATH = 'path'
     CONFIG_NAME_USER = 'username'
     CONFIG_NAME_KEY = 'key'
+    CONFIG_NAME_SSL_CA_CERT = 'ssl_ca_cert'
 
     HEADER_API_VERSION = 'X-Kaggle-ApiVersion'
     DATASET_METADATA_FILE = 'dataset-metadata.json'
@@ -171,6 +172,12 @@ class KaggleApi(KaggleApi):
         if self.CONFIG_NAME_PROXY in config_data:
             configuration.proxy = config_data[self.CONFIG_NAME_PROXY]
 
+        # Cert File
+
+        if self.CONFIG_NAME_SSL_CA_CERT in config_data:
+            configuration.ssl_ca_cert = config_data[self.
+                                                    CONFIG_NAME_SSL_CA_CERT]
+
         # Keep config values with class instance, and load api client!
 
         self.config_values = config_data
@@ -213,8 +220,8 @@ class KaggleApi(KaggleApi):
                     permissions = os.stat(self.config).st_mode
                     if (permissions & 4) or (permissions & 32):
                         print(
-                            'Warning: Your Kaggle API key is readable by other'
-                            'users on this system! To fix this, you can run' +
+                            'Warning: Your Kaggle API key is readable by other '
+                            'users on this system! To fix this, you can run ' +
                             '\'chmod 600 {}\''.format(self.config))
 
                 with open(self.config) as f:
@@ -1262,8 +1269,8 @@ class KaggleApi(KaggleApi):
                     self.datasets_create_version_by_id_with_http_info(
                         id_no, request)))
         else:
-            if ref == self.config_values[self.
-                                         CONFIG_NAME_USER] + '/INSERT_SLUG_HERE':
+            if ref == self.config_values[
+                    self.CONFIG_NAME_USER] + '/INSERT_SLUG_HERE':
                 raise ValueError(
                     'Default slug detected, please change values before '
                     'uploading')
@@ -1442,7 +1449,8 @@ class KaggleApi(KaggleApi):
             dir_mode: What to do with directories: "skip" - ignore; "zip" - compress and upload
         """
         folder = folder or os.getcwd()
-        result = self.dataset_create_new(folder, public, quiet, convert_to_csv, dir_mode)
+        result = self.dataset_create_new(folder, public, quiet, convert_to_csv,
+                                         dir_mode)
         if result.invalidTags:
             print('The following are not valid tags and could not be added to '
                   'the dataset: ' + str(result.invalidTags))
@@ -2094,10 +2102,9 @@ class KaggleApi(KaggleApi):
                 local_date = datetime.fromtimestamp(os.path.getmtime(outfile))
                 if remote_date <= local_date:
                     if not quiet:
-                        print(
-                            os.path.basename(outfile) +
-                            ': Skipping, found more recently modified local '
-                            'copy (use --force to force download)')
+                        print(os.path.basename(outfile) +
+                              ': Skipping, found more recently modified local '
+                              'copy (use --force to force download)')
                     return False
         except:
             pass
@@ -2222,7 +2229,12 @@ class KaggleApi(KaggleApi):
 
         return True
 
-    def upload_files(self, request, resources, folder, quiet=False, dir_mode='skip'):
+    def upload_files(self,
+                     request,
+                     resources,
+                     folder,
+                     quiet=False,
+                     dir_mode='skip'):
         """ upload files in a folder
              Parameters
             ==========
@@ -2239,7 +2251,8 @@ class KaggleApi(KaggleApi):
             full_path = os.path.join(folder, file_name)
 
             if os.path.isfile(full_path):
-                exitcode = self._upload_file(file_name, full_path, quiet, request, resources)
+                exitcode = self._upload_file(file_name, full_path, quiet,
+                                             request, resources)
                 if exitcode:
                     return
             elif os.path.isdir(full_path):
@@ -2247,17 +2260,20 @@ class KaggleApi(KaggleApi):
                     temp_dir = tempfile.mkdtemp()
                     try:
                         _, dir_name = os.path.split(full_path)
-                        archive_path = shutil.make_archive(os.path.join(temp_dir, dir_name),
-                                                           dir_mode, full_path)
+                        archive_path = shutil.make_archive(
+                            os.path.join(temp_dir, dir_name), dir_mode,
+                            full_path)
                         _, archive_name = os.path.split(archive_path)
-                        exitcode = self._upload_file(archive_name, archive_path, quiet, request,
-                                                     resources)
+                        exitcode = self._upload_file(archive_name,
+                                                     archive_path, quiet,
+                                                     request, resources)
                     finally:
                         shutil.rmtree(temp_dir)
                     if exitcode:
                         return
                 elif not quiet:
-                    print("Skipping folder: " + file_name + "; use '--dir-mode' to upload folders")
+                    print("Skipping folder: " + file_name +
+                          "; use '--dir-mode' to upload folders")
             else:
                 if not quiet:
                     print('Skipping: ' + file_name)
@@ -2293,13 +2309,12 @@ class KaggleApi(KaggleApi):
                 if file_name == item.get('path'):
                     upload_file.description = item.get('description')
                     if 'schema' in item:
-                        fields = self.get_or_default(
-                            item['schema'], 'fields', [])
+                        fields = self.get_or_default(item['schema'], 'fields',
+                                                     [])
                         processed = []
                         count = 0
                         for field in fields:
-                            processed.append(
-                                self.process_column(field))
+                            processed.append(self.process_column(field))
                             processed[count].order = count
                             count += 1
                         upload_file.columns = processed
